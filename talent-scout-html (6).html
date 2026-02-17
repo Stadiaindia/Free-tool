@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stadia Scout</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f3ff;color:#1e1b4b;min-height:100vh;}
+.header{background:linear-gradient(160deg,#1e1b4b 0%,#3730a3 60%,#4f46e5 100%);padding:24px 20px;text-align:center;position:relative;box-shadow:0 6px 24px rgba(55,48,163,.35);}
+.header h1{font-size:24px;font-weight:900;color:#fff;letter-spacing:-.3px;}
+.header p{font-size:13px;color:rgba(255,255,255,.7);margin-top:3px;}
+.stadia-watermark{position:absolute;bottom:9px;right:14px;font-size:10px;font-weight:900;color:rgba(255,255,255,.35);letter-spacing:1.5px;}
+.container{max-width:500px;margin:0 auto;padding:18px;}
+.card{background:#fff;border-radius:20px;padding:22px;margin-bottom:14px;box-shadow:0 2px 16px rgba(55,48,163,.08);border:1px solid #ede9fe;}
+.card-hero{background:linear-gradient(145deg,#1e1b4b,#3730a3);border-radius:20px;padding:24px;margin-bottom:14px;color:#fff;box-shadow:0 8px 32px rgba(55,48,163,.4);}
+.card-gold{background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:20px;padding:20px;margin-bottom:14px;color:#fff;}
+.card-soft{background:#faf5ff;border-radius:20px;padding:20px;margin-bottom:14px;border:2px dashed #c4b5fd;}
+.label{display:block;font-size:11px;font-weight:800;color:#6d28d9;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;margin-top:16px;}
+.label:first-child{margin-top:0;}
+.input,.select{width:100%;background:#faf5ff;border:2px solid #ede9fe;border-radius:12px;padding:13px 16px;font-size:15px;color:#1e1b4b;outline:none;transition:border-color .2s;}
+.input:focus,.select:focus{border-color:#4f46e5;background:#fff;}
+.input::placeholder{color:#a78bfa;}
+
+/* ── PIN UI ── */
+.pin-display{display:flex;gap:12px;justify-content:center;margin:20px 0 8px;}
+.pin-dot{width:56px;height:64px;background:#faf5ff;border:2px solid #ede9fe;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#3730a3;transition:all .2s;}
+.pin-dot.filled{background:#ede9fe;border-color:#4f46e5;color:#1e1b4b;}
+.pin-dot.active{border-color:#4f46e5;box-shadow:0 0 0 3px rgba(79,70,229,.15);}
+.keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:280px;margin:16px auto 0;}
+.key{background:#fff;border:1.5px solid #ede9fe;border-radius:14px;padding:16px 0;font-size:20px;font-weight:800;color:#1e1b4b;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(55,48,163,.06);transition:all .15s;user-select:none;-webkit-tap-highlight-color:transparent;}
+.key:active{background:#ede9fe;transform:scale(.95);}
+.key-del{background:#fef2f2;color:#dc2626;border-color:#fecaca;}
+.key-del:active{background:#fee2e2;}
+.key-empty{background:transparent;border:none;box-shadow:none;cursor:default;}
+
+.btn{width:100%;border:none;border-radius:14px;padding:16px;font-size:15px;font-weight:800;cursor:pointer;margin-top:10px;transition:all .15s;letter-spacing:.02em;}
+.btn:active{transform:scale(.98);}
+.btn-primary{background:linear-gradient(135deg,#3730a3,#4f46e5);color:#fff;box-shadow:0 4px 18px rgba(55,48,163,.35);}
+.btn-gold{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;box-shadow:0 4px 18px rgba(245,158,11,.3);}
+.btn-secondary{background:#ede9fe;color:#4f46e5;border:none;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+.sport-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+.sport-card{background:#faf5ff;border:2px solid #ede9fe;border-radius:14px;padding:18px;cursor:pointer;text-align:center;transition:all .2s;}
+.sport-card:hover{border-color:#4f46e5;}
+.sport-card.active{border-color:#3730a3;background:linear-gradient(135deg,#ede9fe,#ddd6fe);}
+.sport-card .s-icon{font-size:32px;margin-bottom:8px;}
+.sport-card .s-name{font-weight:800;font-size:14px;color:#1e1b4b;}
+.age-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px;}
+.age-card{background:#faf5ff;border:2px solid #ede9fe;border-radius:11px;padding:10px 4px;cursor:pointer;text-align:center;transition:all .2s;}
+.age-card:hover{border-color:#4f46e5;}
+.age-card.active{border-color:#3730a3;background:linear-gradient(135deg,#ede9fe,#ddd6fe);}
+.age-card .a-num{font-size:17px;font-weight:900;color:#1e1b4b;}
+.age-card .a-lbl{font-size:10px;color:#a78bfa;}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;}
+.stat-box{background:#fff;border:1px solid #ede9fe;border-radius:16px;padding:16px;text-align:center;box-shadow:0 2px 8px rgba(55,48,163,.06);}
+.stat-num{font-size:30px;font-weight:900;color:#3730a3;}
+.stat-lbl{font-size:11px;color:#a78bfa;margin-top:2px;font-weight:700;}
+.result-header{padding:40px 20px 32px;text-align:center;}
+.big-score{font-size:88px;font-weight:900;line-height:1;color:#fff;}
+.rating-badge{display:inline-block;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.4);border-radius:22px;padding:8px 20px;font-size:14px;font-weight:800;margin-top:12px;color:#fff;}
+.metric{margin-bottom:18px;}
+.metric-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.metric-label{font-size:14px;font-weight:700;color:#1e1b4b;}
+.metric-score{font-size:15px;font-weight:900;}
+.bar-bg{background:#ede9fe;height:10px;border-radius:6px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:6px;transition:width .6s ease;}
+.metric-sub{font-size:11px;color:#a78bfa;margin-top:4px;}
+.ath-row{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid #ede9fe;padding:14px;border-radius:16px;margin-bottom:10px;cursor:pointer;transition:all .2s;box-shadow:0 2px 8px rgba(55,48,163,.05);}
+.ath-row:hover{border-color:#4f46e5;}
+.ath-icon{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.ath-info{flex:1;}
+.ath-name{font-weight:800;font-size:15px;color:#1e1b4b;margin-bottom:3px;}
+.ath-details{font-size:12px;color:#7c3aed;}
+.ath-score{text-align:right;}
+.ath-num{font-size:28px;font-weight:900;}
+.ath-lbl{font-size:10px;font-weight:800;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.divider{height:1px;background:#ede9fe;margin:16px 0;}
+.p-timeline{position:relative;padding-left:22px;}
+.p-timeline::before{content:'';position:absolute;left:7px;top:0;bottom:0;width:2px;background:#ede9fe;}
+.p-entry{position:relative;margin-bottom:14px;}
+.p-entry::before{content:'';position:absolute;left:-18px;top:10px;width:11px;height:11px;border-radius:50%;background:#4f46e5;border:2px solid #f5f3ff;}
+.p-entry.latest::before{background:#f59e0b;}
+.p-box{background:#fff;border:1.5px solid #ede9fe;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(55,48,163,.05);}
+.p-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.p-date{font-size:12px;color:#a78bfa;}
+.p-score{font-size:28px;font-weight:900;}
+.p-change{font-size:12px;font-weight:800;}
+.p-metrics{display:grid;grid-template-columns:1fr 1fr;gap:5px;}
+.p-metric{font-size:12px;color:#a78bfa;}
+.p-metric span{color:#1e1b4b;font-weight:700;}
+.tip{background:#ede9fe;border-left:3px solid #4f46e5;padding:10px 14px;border-radius:0 11px 11px 0;font-size:13px;color:#3730a3;margin-top:8px;font-weight:600;}
+.referral-card{background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:18px;padding:20px;margin-bottom:14px;color:#fff;box-shadow:0 6px 24px rgba(245,158,11,.3);}
+.section-title{font-size:16px;font-weight:800;color:#1e1b4b;margin-bottom:14px;}
+.back-btn{position:absolute;left:14px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:9px;padding:7px 12px;font-size:18px;cursor:pointer;line-height:1;}
+.action-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:9px;padding:7px 12px;font-size:12px;font-weight:800;cursor:pointer;}
+.empty-state{text-align:center;padding:40px 20px;color:#a78bfa;}
+.footer-brand{text-align:center;padding:20px 0 6px;font-size:11px;color:#a78bfa;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+.tab-bar{display:grid;grid-template-columns:1fr 1fr 1fr;background:#fff;border-radius:16px;overflow:hidden;margin-bottom:16px;border:1.5px solid #ede9fe;box-shadow:0 2px 8px rgba(55,48,163,.06);}
+.tab{padding:13px 0;text-align:center;font-size:12px;font-weight:800;color:#a78bfa;cursor:pointer;border:none;background:transparent;transition:all .2s;}
+.tab.active{background:linear-gradient(135deg,#3730a3,#4f46e5);color:#fff;}
+.tab .t-icon{font-size:18px;display:block;margin-bottom:2px;}
+.student-row{display:flex;align-items:center;gap:12px;background:#fff;border:1.5px solid #ede9fe;padding:12px 14px;border-radius:14px;margin-bottom:8px;box-shadow:0 1px 4px rgba(55,48,163,.04);}
+.student-avatar{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;flex-shrink:0;}
+.student-info{flex:1;}
+.student-name{font-weight:800;font-size:14px;color:#1e1b4b;margin-bottom:2px;}
+.student-meta{font-size:12px;color:#a78bfa;}
+.icon-btn{background:#ede9fe;border:none;border-radius:8px;padding:7px 10px;font-size:14px;cursor:pointer;color:#4f46e5;font-weight:700;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ══ DATA ══ */
+var STATES=["Andaman & Nicobar Islands","Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chandigarh","Chhattisgarh","Dadra & Nagar Haveli","Daman & Diu","Delhi","Goa","Gujarat","Haryana","Himachal Pradesh","Jammu & Kashmir","Jharkhand","Karnataka","Kerala","Ladakh","Lakshadweep","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Puducherry","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal"].sort();
+var SPORTS={
+    "Track & Field":{icon:"🏃‍♂️",metrics:{sprint50:{name:"50m Sprint",unit:"sec",icon:"⚡",lb:true,tip:"Flat surface, standing start"},standingJump:{name:"Standing Broad Jump",unit:"cm",icon:"🦘",lb:false,tip:"Still position, measure to heel"},shuttle:{name:"4×10m Shuttle Run",unit:"sec",icon:"🔄",lb:true,tip:"4 cones × 10m, touch each end"},flexibility:{name:"Sit & Reach",unit:"cm",icon:"🤸",lb:false,tip:"Seated, reach forward, best of 3"}},weights:{sprint50:30,standingJump:30,shuttle:25,flexibility:15},benchmarks:{10:{sprint50:9.5,standingJump:110,shuttle:14.5,flexibility:15},12:{sprint50:8.8,standingJump:130,shuttle:13.5,flexibility:18},14:{sprint50:8.0,standingJump:150,shuttle:12.5,flexibility:20},16:{sprint50:7.3,standingJump:170,shuttle:11.5,flexibility:22},18:{sprint50:6.8,standingJump:190,shuttle:10.8,flexibility:25}}},
+    "Football":{icon:"⚽",metrics:{sprint30:{name:"30m Sprint",unit:"sec",icon:"⚡",lb:true,tip:"Standing start, flat ground"},agility:{name:"T-Test Agility",unit:"sec",icon:"🔄",lb:true,tip:"Cone drill: forward, lateral, back"},vertJump:{name:"Vertical Jump",unit:"cm",icon:"🦘",lb:false,tip:"Wall mark or jump mat"},yoyo:{name:"Yo-Yo Test",unit:"level",icon:"🫁",lb:false,tip:"Record highest level reached"}},weights:{sprint30:25,agility:30,vertJump:20,yoyo:25},benchmarks:{10:{sprint30:6.2,agility:14.0,vertJump:20,yoyo:8},12:{sprint30:5.7,agility:13.0,vertJump:25,yoyo:10},14:{sprint30:5.2,agility:12.0,vertJump:30,yoyo:12},16:{sprint30:4.8,agility:11.0,vertJump:35,yoyo:14},18:{sprint30:4.5,agility:10.5,vertJump:40,yoyo:16}}}
+};
+var AGES=[10,12,14,16,18];
+var AVCOLS=["#3730a3","#7c3aed","#0f766e","#b45309","#be123c","#1d4ed8","#15803d","#9333ea"];
+
+/* ══ STATE ══ */
+var S={
+    view:'login',tab:'assess',
+    coach:null,students:[],assessments:[],current:null,
+    form:{name:'',age:12,sport:'Track & Field',vals:{}},
+    pendingCoach:null,setupPhone:'',setupName:'',pendingProfile:null,newStudent:{age:12,sport:'Track & Field'},
+    pin1:[],pin2:[],       /* arrays of digits for set-pin */
+    pinActive:1,           /* which row is active: 1 or 2 */
+    vpin:[],               /* digits for verify */
+};
+
+/* ══ HELPERS ══ */
+function calcScore(sport,age,vals){
+    var sp=SPORTS[sport],bench=sp.benchmarks[age],w=sp.weights,scores=[],keys=Object.keys(sp.metrics);
+    for(var i=0;i<keys.length;i++){var k=keys[i],m=sp.metrics[k],v=parseFloat(vals[k]),b=bench[k];var pct=m.lb?Math.min(120,(b/v)*100):Math.min(120,(v/b)*100);scores.push({key:k,name:m.name,icon:m.icon,unit:m.unit,score:Math.min(100,Math.round(pct)),raw:v,bench:b});}
+    var total=0;for(var j=0;j<scores.length;j++)total+=(scores[j].score*w[scores[j].key])/100;
+    return{total:Math.min(100,Math.round(total)),scores:scores};
+}
+function getRating(s){
+    if(s>=85)return{label:"Elite Potential",color:"#059669",bg:"#d1fae5",emoji:"🔥"};
+    if(s>=70)return{label:"High Potential",color:"#3730a3",bg:"#ede9fe",emoji:"⭐"};
+    if(s>=55)return{label:"Promising",color:"#d97706",bg:"#fef3c7",emoji:"👍"};
+    return{label:"Developing",color:"#7c3aed",bg:"#f5f3ff",emoji:"🌱"};
+}
+function barColor(s){if(s>=85)return'#059669';if(s>=70)return'#3730a3';if(s>=55)return'#d97706';return'#7c3aed';}
+function avc(name){return AVCOLS[name.charCodeAt(0)%AVCOLS.length];}
+function initials(n){var p=n.trim().split(' ');return p.length>1?p[0][0]+p[1][0]:n.slice(0,2).toUpperCase();}
+function hist(name,sport){return S.assessments.filter(function(a){return a.name.trim().toLowerCase()===name.trim().toLowerCase()&&a.sport===sport;}).sort(function(a,b){return new Date(a.ts)-new Date(b.ts);});}
+function fd(iso){return new Date(iso).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
+function ft(iso){return new Date(iso).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}
+function hashPin(pin,phone){var str=pin+'::'+phone+'::stadia2025x',h=5381;for(var i=0;i<str.length;i++){h=((h<<5)+h)+str.charCodeAt(i);h=h&h;}return(h>>>0).toString(36);}
+
+/* ══ STORAGE ══ */
+function loadAll(){try{var c=localStorage.getItem('stadia_coach');if(c){S.coach=JSON.parse(c);var a=localStorage.getItem('stadia_ass_'+S.coach.phone);S.assessments=a?JSON.parse(a):[];var st=localStorage.getItem('stadia_stu_'+S.coach.phone);S.students=st?JSON.parse(st):[];S.view='home';}}catch(e){}}
+function saveCoach(coach){localStorage.setItem('stadia_coach',JSON.stringify(coach));var all=JSON.parse(localStorage.getItem('stadia_all')||'{}');all[coach.phone]=coach;localStorage.setItem('stadia_all',JSON.stringify(all));S.coach=coach;}
+function saveAss(){if(S.coach)localStorage.setItem('stadia_ass_'+S.coach.phone,JSON.stringify(S.assessments));}
+function saveStu(){if(S.coach)localStorage.setItem('stadia_stu_'+S.coach.phone,JSON.stringify(S.students));}
+function doExport(){
+    if(!S.assessments.length){alert('No assessments to export yet.');return;}
+    var rows=[["Athlete","Age","Sport","Score","Rating","Date","Time","Coach","School","District","State"].join(',')];
+    S.assessments.forEach(function(a){var r=getRating(a.total);rows.push([a.name,a.age,a.sport,a.total,r.label,fd(a.ts),ft(a.ts),S.coach.name,S.coach.school,S.coach.district,S.coach.state].join(','));});
+    var url=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv'}));var link=document.createElement('a');link.href=url;link.download='Stadia_'+S.coach.name.replace(/\s/g,'_')+'_'+new Date().toISOString().split('T')[0]+'.csv';link.click();
+}
+
+/* ══ KEYPAD HTML ══ */
+function keypadHTML(id){
+    var keys=['1','2','3','4','5','6','7','8','9','','0','⌫'];
+    var html='<div class="keypad" id="kp_'+id+'">';
+    keys.forEach(function(k){
+        if(k==='')html+='<div class="key key-empty"></div>';
+        else if(k==='⌫')html+='<div class="key key-del" data-kp="'+id+'" data-k="del">⌫</div>';
+        else html+='<div class="key" data-kp="'+id+'" data-k="'+k+'">'+k+'</div>';
+    });
+    return html+'</div>';
+}
+function dotsHTML(arr,maxLen){
+    var html='<div class="pin-display">';
+    for(var i=0;i<maxLen;i++){
+        var filled=i<arr.length;
+        var active=i===arr.length;
+        html+='<div class="pin-dot'+(filled?' filled':'')+(active?' active':'')+'">'+
+            (filled?'●':'')+
+        '</div>';
+    }
+    return html+'</div>';
+}
+
+/* ══ RENDER ══ */
+function render(){
+    var html='';
+    if(S.view==='login')    html=vLogin();
+    else if(S.view==='setup')   html=vSetup();
+    else if(S.view==='setpin')  html=vSetPin();
+    else if(S.view==='verify')  html=vVerify();
+    else if(S.view==='home')    html=vHome();
+    else if(S.view==='result')  html=vResult();
+    else if(S.view==='progress')html=vProgress();
+    else if(S.view==='addStudent')html=vAddStudent();
+    document.getElementById('app').innerHTML=html;
+    bind();
+}
+
+/* ══ VIEWS ══ */
+function vLogin(){
+    return '<div class="header"><div style="font-size:13px;font-weight:900;letter-spacing:2px;color:rgba(255,255,255,.45);margin-bottom:6px;">STADIA</div><h1>Scout</h1><p>Grassroots Athlete Assessment</p><div class="stadia-watermark">STADIA</div></div>'+
+    '<div class="container">'+
+    '<div class="card-hero" style="text-align:center;padding:28px 24px;"><div style="font-size:44px;margin-bottom:10px;">🏆</div><div style="font-size:17px;font-weight:900;margin-bottom:6px;">Welcome, Coach!</div><div style="font-size:13px;opacity:.8;line-height:1.7;">Assess athletes. Track progress.<br>Build India\'s next champions.</div></div>'+
+    '<div class="card">'+
+    '<label class="label">Your Name</label><input class="input" id="lName" placeholder="e.g. Ramesh Kumar">'+
+    '<label class="label">Mobile Number</label><input class="input" id="lPhone" type="tel" maxlength="10" placeholder="10-digit number">'+
+    '<button class="btn btn-primary" id="lContinue" style="margin-top:18px;">Continue →</button>'+
+    '</div>'+
+    '<div style="background:#fff;border:1.5px solid #ede9fe;border-radius:14px;padding:14px;font-size:13px;color:#7c3aed;line-height:1.7;font-weight:600;">🔒 A 4-digit PIN protects your account. Even if someone knows your number, they need your PIN.</div>'+
+    '<div class="footer-brand">by STADIA</div></div>';
+}
+
+function vSetup(){
+    var opts='<option value="">Select State / UT</option>';
+    STATES.forEach(function(s){opts+='<option value="'+s+'">'+s+'</option>';});
+    return '<div class="header" style="position:relative;"><button class="back-btn" id="backLogin">←</button><h1 style="font-size:20px;">Your Profile</h1><p>One-time setup</p><div class="stadia-watermark">STADIA</div></div>'+
+    '<div class="container"><div class="card">'+
+    '<label class="label">Full Name *</label><input class="input" id="sName" placeholder="Your full name" value="'+(S.setupName||'')+'">'+
+    '<label class="label">Mobile</label><input class="input" value="'+S.setupPhone+'" disabled style="opacity:.45;">'+
+    '<label class="label">School / Academy / Club *</label><input class="input" id="sSchool" placeholder="e.g. Govt. High School">'+
+    '<label class="label">District *</label><input class="input" id="sDistrict" placeholder="e.g. Pune">'+
+    '<label class="label">State / UT *</label><select class="select" id="sState">'+opts+'</select>'+
+    '<button class="btn btn-primary" id="sNext" style="margin-top:18px;">Next: Set PIN →</button>'+
+    '</div><div class="footer-brand">by STADIA</div></div>';
+}
+
+function vSetPin(){
+    var p1=S.pin1, p2=S.pin2, active=S.pinActive;
+    var p1Done=p1.length===4;
+    return '<div class="header" style="position:relative;"><button class="back-btn" id="backSetup">←</button><h1 style="font-size:20px;">Set Your PIN</h1><p>Protects your account</p><div class="stadia-watermark">STADIA</div></div>'+
+    '<div class="container"><div class="card" style="text-align:center;">'+
+    '<div style="font-size:38px;margin-bottom:10px;">🔐</div>'+
+
+    /* Row 1 */
+    '<div style="font-size:12px;font-weight:800;color:'+(active===1?'#3730a3':'#a78bfa')+';letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;">Enter PIN</div>'+
+    dotsHTML(p1,4)+
+
+    /* Row 2 — shown only after first row done */
+    (p1Done?
+        '<div style="margin-top:16px;font-size:12px;font-weight:800;color:'+(active===2?'#3730a3':'#a78bfa')+';letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px;">Confirm PIN</div>'+
+        dotsHTML(p2,4):'')+
+
+    '<div id="spMsg" style="min-height:20px;margin-top:10px;font-size:13px;font-weight:700;color:#dc2626;"></div>'+
+
+    /* One keypad — serves whichever row is active */
+    keypadHTML('sp')+
+
+    (p1Done&&p2.length===4?'<button class="btn btn-primary" id="setPinBtn" style="margin-top:16px;">Create Account 🚀</button>':'')+
+
+    '</div><div class="footer-brand">by STADIA</div></div>';
+}
+
+function vVerify(){
+    var name=S.pendingCoach?S.pendingCoach.name:'Coach';
+    return '<div class="header" style="position:relative;"><button class="back-btn" id="backLogin2">←</button><h1 style="font-size:20px;">Welcome back!</h1><p>'+name+'</p><div class="stadia-watermark">STADIA</div></div>'+
+    '<div class="container"><div class="card" style="text-align:center;">'+
+    '<div style="font-size:42px;margin-bottom:12px;">🔒</div>'+
+    '<div style="font-size:14px;color:#7c3aed;font-weight:700;margin-bottom:6px;">Enter your 4-digit PIN</div>'+
+    dotsHTML(S.vpin,4)+
+    '<div id="vpMsg" style="min-height:20px;margin-top:4px;font-size:13px;font-weight:700;color:#dc2626;"></div>'+
+    keypadHTML('vp')+
+    (S.vpin.length===4?'<button class="btn btn-primary" id="verifyBtn" style="margin-top:16px;">Unlock →</button>':'')+
+    '</div><div class="footer-brand">by STADIA</div></div>';
+}
+
+function vHome(){
+    var tab=S.tab;
+    var unique=[];S.assessments.forEach(function(a){if(unique.indexOf(a.name.toLowerCase())<0)unique.push(a.name.toLowerCase());});
+    var tests=S.assessments.length,elite=S.assessments.filter(function(a){return a.total>=70;}).length;
+
+    var assessTab='',rosterTab='',testsTab='';
+
+    if(tab==='assess'){
+        var sp=SPORTS[S.form.sport],bench=sp.benchmarks[S.form.age];
+        var ageCards='';AGES.forEach(function(a){ageCards+='<div class="age-card'+(S.form.age===a?' active':'')+'" data-age="'+a+'"><div class="a-num">'+a+'</div><div class="a-lbl">yrs</div></div>';});
+        var sportCards='';Object.keys(SPORTS).forEach(function(k){sportCards+='<div class="sport-card'+(S.form.sport===k?' active':'')+'" data-sport="'+k+'"><div class="s-icon">'+SPORTS[k].icon+'</div><div class="s-name">'+k+'</div></div>';});
+        var athPick=S.students.length?
+            '<select class="select" id="aNameSel"><option value="">— Select from Roster —</option>'+S.students.map(function(st){return'<option value="'+st.name+'|'+st.age+'|'+st.sport+'">'+st.name+' ('+st.age+'y)</option>';}).join('')+'</select><div style="font-size:11px;color:#a78bfa;text-align:center;margin:6px 0;">or type manually</div><input class="input" id="aName" placeholder="Athlete name" value="'+S.form.name+'">':
+            '<input class="input" id="aName" placeholder="Athlete name" value="'+S.form.name+'">';
+        var mFields='';Object.keys(sp.metrics).forEach(function(k){var m=sp.metrics[k];mFields+='<label class="label">'+m.icon+' '+m.name+' ('+m.unit+')</label><input class="input" id="m_'+k+'" type="number" step="0.01" placeholder="Benchmark: '+bench[k]+' '+m.unit+'" value="'+(S.form.vals[k]||'')+'"><div style="font-size:11px;color:#a78bfa;margin-top:3px;">📌 '+m.tip+'</div>';});
+        var statsH=tests>0?'<div class="stat-grid"><div class="stat-box"><div class="stat-num">'+unique.length+'</div><div class="stat-lbl">Athletes</div></div><div class="stat-box"><div class="stat-num">'+tests+'</div><div class="stat-lbl">Tests</div></div><div class="stat-box"><div class="stat-num" style="color:#f59e0b;">'+elite+'</div><div class="stat-lbl">Referral+</div></div></div>':'<div class="card-soft"><div style="font-weight:800;color:#3730a3;margin-bottom:6px;">🎯 Ready to start?</div><div style="font-size:13px;color:#4f46e5;line-height:1.9;">Add athletes in <strong>Roster</strong> tab,<br>then assess them here!</div></div>';
+        assessTab=statsH+'<div class="card"><div class="section-title">New Assessment</div><label class="label">Athlete</label>'+athPick+'<div class="tip" style="margin-top:10px;">💡 Same name every time = auto progress tracking</div><label class="label" style="margin-top:16px;">Age</label><div class="age-grid">'+ageCards+'</div><label class="label" style="margin-top:16px;">Sport</label><div class="sport-grid">'+sportCards+'</div></div><div class="card"><div class="section-title">📊 Test Results</div><div style="font-size:12px;color:#a78bfa;margin-bottom:14px;">'+S.form.sport+' · Age '+S.form.age+'</div>'+mFields+'</div><button class="btn btn-primary" id="aCalc">Calculate Talent Score 🎯</button>'+(tests?'<button class="btn btn-secondary" id="hExport" style="margin-top:8px;">📥 Export All to Excel</button>':'');
+    }
+
+    if(tab==='roster'){
+        var sRows='';
+        S.students.forEach(function(st,idx){
+            var bg=avc(st.name);var lt=S.assessments.filter(function(a){return a.name.toLowerCase()===st.name.toLowerCase();});lt.sort(function(a,b){return new Date(b.ts)-new Date(a.ts);});
+            var sc=lt.length?'<span style="font-size:13px;font-weight:900;color:'+getRating(lt[0].total).color+';">'+lt[0].total+'</span>':'<span style="font-size:12px;color:#a78bfa;">No tests yet</span>';
+            sRows+='<div class="student-row"><div class="student-avatar" style="background:'+bg+';">'+initials(st.name)+'</div><div class="student-info"><div class="student-name">'+st.name+'</div><div class="student-meta">'+st.sport+' · '+st.age+'y · '+sc+'</div></div><div style="display:flex;gap:6px;"><button class="icon-btn assess-from-roster" data-idx="'+idx+'" title="Assess">⚡</button><button class="icon-btn delete-student" data-idx="'+idx+'" style="background:#fee2e2;color:#dc2626;" title="Remove">✕</button></div></div>';
+        });
+        if(!sRows)sRows='<div class="empty-state"><div style="font-size:44px;">👥</div><div style="margin-top:10px;font-weight:700;">No athletes yet</div><div style="font-size:13px;margin-top:4px;">Tap below to add your first athlete</div></div>';
+        rosterTab='<div class="card"><div class="section-title">👥 Roster ('+S.students.length+')</div>'+sRows+'</div><button class="btn btn-primary" id="goAddStudent">+ Add Athlete</button>';
+    }
+
+    if(tab==='tests'){
+        var groups={};S.assessments.forEach(function(a){var key=a.name.toLowerCase()+'__'+a.sport;if(!groups[key])groups[key]=[];groups[key].push(a);});
+        var tRows='';
+        Object.keys(groups).forEach(function(key){
+            var g=groups[key].sort(function(a,b){return new Date(a.ts)-new Date(b.ts);});
+            var latest=g[g.length-1],count=g.length,imp=count>1?g[count-1].total-g[0].total:null;
+            var r=getRating(latest.total);var ic=imp!==null?(imp>=0?'<span style="color:#059669;">↗ +'+imp+'</span>':'<span style="color:#dc2626;">↘ '+imp+'</span>'):'';
+            tRows+='<div class="ath-row" data-name="'+latest.name+'" data-sport="'+latest.sport+'"><div class="ath-icon" style="background:'+r.bg+';">'+r.emoji+'</div><div class="ath-info"><div class="ath-name">'+latest.name+'</div><div class="ath-details">'+latest.sport+' · '+latest.age+'y · <strong style="color:#3730a3;">'+count+' test'+(count>1?'s':'')+'</strong>'+(ic?' · '+ic:'')+'</div></div><div class="ath-score"><div class="ath-num" style="color:'+r.color+';">'+latest.total+'</div><div class="ath-lbl" style="color:'+r.color+';">'+r.label+'</div></div></div>';
+        });
+        if(!tRows)tRows='<div class="empty-state"><div style="font-size:44px;">📊</div><div style="margin-top:10px;font-weight:700;">No tests yet</div></div>';
+        testsTab='<div class="card"><div class="section-title">📋 All Results</div>'+tRows+'</div>'+(S.assessments.length?'<button class="btn btn-gold" id="hExport2">📥 Export to Excel</button>':'');
+    }
+
+    return '<div class="header" style="position:relative;"><button class="action-btn" id="hLogout">Logout</button><h1 style="font-size:20px;">Stadia Scout</h1><p>'+S.coach.name+' · '+S.coach.district+'</p><div class="stadia-watermark">STADIA</div></div>'+
+    '<div class="container">'+
+    '<div class="tab-bar"><button class="tab'+(tab==='assess'?' active':'')+'" id="tabAssess"><span class="t-icon">⚡</span>Assess</button><button class="tab'+(tab==='roster'?' active':'')+'" id="tabRoster"><span class="t-icon">👥</span>Roster</button><button class="tab'+(tab==='tests'?' active':'')+'" id="tabTests"><span class="t-icon">📊</span>Results</button></div>'+
+    assessTab+rosterTab+testsTab+
+    '<div class="footer-brand">by STADIA</div></div>';
+}
+
+function vAddStudent(){
+    var sCards='';Object.keys(SPORTS).forEach(function(k){sCards+='<div class="sport-card'+(S.newStudent.sport===k?' active':'')+'" data-nsport="'+k+'"><div class="s-icon">'+SPORTS[k].icon+'</div><div class="s-name">'+k+'</div></div>';});
+    var aCards='';AGES.forEach(function(a){aCards+='<div class="age-card'+(S.newStudent.age===a?' active':'')+'" data-nage="'+a+'"><div class="a-num">'+a+'</div><div class="a-lbl">yrs</div></div>';});
+    return '<div class="header" style="position:relative;"><button class="back-btn" id="backRoster">←</button><h1 style="font-size:20px;">Add Athlete</h1><p>Add to your roster</p><div class="stadia-watermark">STADIA</div></div>'+
+    '<div class="container"><div class="card">'+
+    '<label class="label">Full Name *</label><input class="input" id="nsName" placeholder="e.g. Arjun Singh">'+
+    '<label class="label" style="margin-top:16px;">Age *</label><div class="age-grid">'+aCards+'</div>'+
+    '<label class="label" style="margin-top:16px;">Sport *</label><div class="sport-grid">'+sCards+'</div>'+
+    '<label class="label">Notes (optional)</label><input class="input" id="nsNotes" placeholder="e.g. Strong left foot">'+
+    '<button class="btn btn-primary" id="saveStudent" style="margin-top:18px;">Add to Roster ✓</button>'+
+    '</div><div class="footer-brand">by STADIA</div></div>';
+}
+
+function vResult(){
+    var a=S.current,r=getRating(a.total),h=hist(a.name,a.sport),hasH=h.length>1;
+    var prev=hasH?h[h.length-2]:null,diff=prev?a.total-prev.total:null;
+    var diffH=diff!==null?'<div style="font-size:14px;font-weight:800;margin-top:8px;color:rgba(255,255,255,.85);">'+(diff>0?'↗ +':diff<0?'↘ ':'→ ')+diff+' from last test</div>':'';
+    var rows='';a.scores.forEach(function(s){var bc=barColor(s.score);rows+='<div class="metric"><div class="metric-row"><span class="metric-label">'+s.icon+' '+s.name+'</span><span class="metric-score" style="color:'+bc+';">'+s.score+'/100</span></div><div class="bar-bg"><div class="bar-fill" style="width:'+s.score+'%;background:'+bc+';"></div></div><div class="metric-sub">Result: '+s.raw+' '+s.unit+' · Target: '+s.bench+' '+s.unit+'</div></div>';});
+    var ref=a.total>=70?'<div class="referral-card"><div style="font-size:16px;font-weight:800;margin-bottom:8px;">🎯 Referral Ready!</div><div style="font-size:13px;line-height:1.7;opacity:.95;"><strong>'+a.name+'</strong> qualifies for district/state programs. Export data and contact your District Sports Officer.</div></div>':'';
+    return '<div class="result-header" style="background:linear-gradient(160deg,#1e1b4b,'+r.color+');">'+
+    '<div style="font-size:22px;font-weight:900;margin-bottom:4px;color:#fff;">'+a.name+'</div>'+
+    '<div style="font-size:13px;color:rgba(255,255,255,.7);margin-bottom:18px;">'+a.sport+' · '+a.age+' years · '+fd(a.ts)+'</div>'+
+    '<div class="big-score">'+a.total+'</div>'+diffH+
+    '<div class="rating-badge">'+r.emoji+' '+r.label+'</div>'+
+    '</div><div class="container">'+
+    (hasH?'<button class="btn btn-gold" id="rProgress">📈 Progress Report ('+h.length+' tests)</button>':'')+
+    '<div class="card"><div class="section-title">Performance Breakdown</div>'+rows+'</div>'+ref+
+    '<div class="grid2"><button class="btn btn-secondary" id="rNewTest">New Test</button><button class="btn btn-secondary" id="rAllTests">All Results</button></div>'+
+    '<button class="btn btn-primary" id="rTestSame" style="margin-top:8px;">Test '+a.name+' Again →</button>'+
+    '<div class="footer-brand">by STADIA</div></div>';
+}
+
+function vProgress(){
+    var h=hist(S.current.name,S.current.sport);
+    if(!h.length)return vResult();
+    var first=h[0],latest=h[h.length-1],gain=latest.total-first.total,r=getRating(latest.total);
+    var barH='',lblH='';
+    h.forEach(function(t,i){var ht=Math.round((t.total/100)*55)+5,bc=barColor(t.total);var top=i===h.length-1?'<div style="font-size:10px;font-weight:800;color:'+bc+';">'+t.total+'</div>':'<div style="font-size:10px;"> </div>';barH+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">'+top+'<div style="width:100%;height:'+ht+'px;background:'+bc+';border-radius:4px 4px 0 0;"></div></div>';lblH+='<div style="flex:1;text-align:center;font-size:9px;color:#a78bfa;">T'+(i+1)+'</div>';});
+    var gc=gain>=0?'#059669':'#dc2626';
+    var entries='';
+    h.slice().reverse().forEach(function(t,idx){
+        var isLatest=idx===0,prevT=idx<h.length-1?h[h.length-2-idx]:null,diff=prevT?t.total-prevT.total:null,rc=getRating(t.total);
+        var dH=diff!==null?'<div class="p-change" style="color:'+(diff>0?'#059669':diff<0?'#dc2626':'#a78bfa')+'">'+(diff>0?'↗ +':diff<0?'↘ ':'→ ')+diff+'</div>':'<div class="p-change" style="color:#a78bfa;">First test</div>';
+        var mR='';t.scores.forEach(function(sc){mR+='<div class="p-metric">'+sc.icon+' '+sc.name+': <span>'+sc.raw+' '+sc.unit+'</span></div>';});
+        entries+='<div class="p-entry'+(isLatest?' latest':'')+'"><div class="p-box"><div class="p-head"><div><div style="font-weight:800;font-size:13px;color:'+rc.color+';">'+rc.emoji+' '+rc.label+'</div><div class="p-date">'+fd(t.ts)+' · '+ft(t.ts)+'</div>'+(isLatest?'<span style="background:#d1fae5;color:#059669;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:800;display:inline-block;margin-top:4px;">Latest</span>':'')+'</div><div style="text-align:right;"><div class="p-score" style="color:'+rc.color+';">'+t.total+'</div>'+dH+'</div></div><div class="p-metrics">'+mR+'</div></div></div>';
+    });
+    var ref=latest.total>=70?'<div class="referral-card"><div style="font-weight:800;font-size:15px;margin-bottom:8px;">🎯 Referral Ready!</div><div style="font-size:13px;opacity:.95;line-height:1.7;">Score <strong>'+latest.total+'/100</strong>'+(gain>0?' · Improved by <strong>+'+gain+' points</strong> ✅':'')+'</div></div>':'';
+    return '<div class="header" style="position:relative;background:linear-gradient(160deg,#1e1b4b,#3730a3);"><button class="back-btn" id="pBack">←</button><h1 style="font-size:20px;">Progress Report</h1><p>'+latest.name+' · '+latest.sport+'</p><div class="stadia-watermark">STADIA</div></div>'+
+    '<div class="container">'+
+    '<div class="card"><div class="section-title">📊 Overall Summary</div>'+
+    '<div class="grid3"><div style="text-align:center;"><div style="font-size:11px;color:#a78bfa;margin-bottom:4px;font-weight:700;">FIRST</div><div style="font-size:28px;font-weight:900;color:'+getRating(first.total).color+';">'+first.total+'</div><div style="font-size:10px;color:#a78bfa;">'+fd(first.ts)+'</div></div>'+
+    '<div style="text-align:center;display:flex;flex-direction:column;justify-content:center;"><div style="font-size:28px;font-weight:900;color:'+gc+';">'+(gain>=0?'+':'')+gain+'</div><div style="font-size:11px;color:#a78bfa;font-weight:700;">CHANGE</div></div>'+
+    '<div style="text-align:center;"><div style="font-size:11px;color:#a78bfa;margin-bottom:4px;font-weight:700;">LATEST</div><div style="font-size:28px;font-weight:900;color:'+r.color+';">'+latest.total+'</div><div style="font-size:10px;color:#a78bfa;">'+fd(latest.ts)+'</div></div></div>'+
+    (h.length>1?'<div class="divider"></div><div style="font-size:11px;font-weight:800;color:#a78bfa;letter-spacing:.06em;margin-bottom:8px;">SCORE TREND</div><div style="display:flex;align-items:flex-end;gap:6px;height:65px;">'+barH+'</div><div style="display:flex;gap:6px;margin-top:4px;">'+lblH+'</div>':'')+
+    '</div><div class="card"><div class="section-title">🕐 Full History ('+h.length+')</div><div class="p-timeline">'+entries+'</div></div>'+ref+
+    '<button class="btn btn-primary" id="pTestAgain">+ Test '+latest.name+' Again</button>'+
+    '<button class="btn btn-secondary" id="pExport" style="margin-top:8px;">📥 Export Data</button>'+
+    '<div class="footer-brand">by STADIA</div></div>';
+}
+
+/* ══ BIND ══ */
+function on(id,fn){var el=document.getElementById(id);if(el)el.onclick=fn;}
+
+function bindKeypad(kpId){
+    document.querySelectorAll('[data-kp="'+kpId+'"]').forEach(function(el){
+        el.onclick=function(e){
+            e.preventDefault();
+            var k=el.getAttribute('data-k');
+            if(kpId==='sp'){
+                var active=S.pinActive;
+                if(active===1){
+                    if(k==='del'){if(S.pin1.length>0)S.pin1.pop();}
+                    else if(S.pin1.length<4){S.pin1.push(k);}
+                    if(S.pin1.length===4)S.pinActive=2;
+                } else {
+                    if(k==='del'){if(S.pin2.length>0)S.pin2.pop();}
+                    else if(S.pin2.length<4){S.pin2.push(k);}
+                }
+                render();
+            } else if(kpId==='vp'){
+                if(k==='del'){if(S.vpin.length>0)S.vpin.pop();}
+                else if(S.vpin.length<4){S.vpin.push(k);}
+                render();
+            }
+        };
+    });
+}
+
+function bind(){
+    /* LOGIN */
+    on('lContinue',function(){
+        var name=((document.getElementById('lName')||{}).value||'').trim();
+        var phone=((document.getElementById('lPhone')||{}).value||'').trim();
+        if(!phone||phone.length!==10){alert('Enter a valid 10-digit mobile number.');return;}
+        var all=JSON.parse(localStorage.getItem('stadia_all')||'{}');
+        if(all[phone]){S.pendingCoach=all[phone];S.vpin=[];S.view='verify';render();}
+        else{S.setupPhone=phone;S.setupName=name;S.view='setup';render();}
+    });
+
+    /* SETUP */
+    on('backLogin',function(){S.view='login';render();});
+    on('sNext',function(){
+        var name=((document.getElementById('sName')||{}).value||'').trim();
+        var school=((document.getElementById('sSchool')||{}).value||'').trim();
+        var district=((document.getElementById('sDistrict')||{}).value||'').trim();
+        var state=((document.getElementById('sState')||{}).value||'');
+        if(!name||!school||!district||!state){alert('Please fill all fields.');return;}
+        S.pendingProfile={name:name,phone:S.setupPhone,school:school,district:district,state:state};
+        S.pin1=[];S.pin2=[];S.pinActive=1;S.view='setpin';render();
+    });
+
+    /* SET PIN */
+    on('backSetup',function(){S.view='setup';render();});
+    bindKeypad('sp');
+    on('setPinBtn',function(){
+        var p1=S.pin1.join(''),p2=S.pin2.join('');
+        if(p1!==p2){
+            var msg=document.getElementById('spMsg');if(msg)msg.textContent='PINs do not match. Try again.';
+            S.pin2=[];S.pinActive=2;render();return;
+        }
+        var p=S.pendingProfile;
+        var coach={id:Date.now(),name:p.name,phone:p.phone,school:p.school,district:p.district,state:p.state,pinHash:hashPin(p1,p.phone)};
+        saveCoach(coach);S.students=[];S.assessments=[];saveStu();saveAss();
+        S.view='home';S.tab='roster';render();
+    });
+
+    /* VERIFY */
+    on('backLogin2',function(){S.pendingCoach=null;S.vpin=[];S.view='login';render();});
+    bindKeypad('vp');
+    on('verifyBtn',function(){
+        var pin=S.vpin.join('');
+        if(hashPin(pin,S.pendingCoach.phone)===S.pendingCoach.pinHash){
+            saveCoach(S.pendingCoach);
+            var a=localStorage.getItem('stadia_ass_'+S.pendingCoach.phone);S.assessments=a?JSON.parse(a):[];
+            var st=localStorage.getItem('stadia_stu_'+S.pendingCoach.phone);S.students=st?JSON.parse(st):[];
+            S.pendingCoach=null;S.view='home';S.tab='assess';render();
+        } else {
+            var msg=document.getElementById('vpMsg');if(msg)msg.textContent='❌ Wrong PIN. Try again.';
+            S.vpin=[];render();
+        }
+    });
+
+    /* TABS */
+    on('tabAssess',function(){S.tab='assess';render();});
+    on('tabRoster',function(){S.tab='roster';render();});
+    on('tabTests', function(){S.tab='tests'; render();});
+
+    /* LOGOUT */
+    on('hLogout',function(){
+        if(confirm('Logout? Data stays saved. Login with phone + PIN anytime.')){
+            localStorage.removeItem('stadia_coach');S.coach=null;S.assessments=[];S.students=[];S.view='login';render();
+        }
+    });
+
+    /* ROSTER */
+    on('goAddStudent',function(){S.newStudent={age:12,sport:'Track & Field'};S.view='addStudent';render();});
+    document.querySelectorAll('.delete-student').forEach(function(el){
+        el.onclick=function(e){e.stopPropagation();var idx=parseInt(el.getAttribute('data-idx'));if(confirm('Remove '+S.students[idx].name+'?')){S.students.splice(idx,1);saveStu();render();}};
+    });
+    document.querySelectorAll('.assess-from-roster').forEach(function(el){
+        el.onclick=function(e){e.stopPropagation();var idx=parseInt(el.getAttribute('data-idx'));var st=S.students[idx];S.form={name:st.name,age:st.age,sport:st.sport,vals:{}};S.tab='assess';render();};
+    });
+
+    /* ADD STUDENT */
+    on('backRoster',function(){S.tab='roster';S.view='home';render();});
+    document.querySelectorAll('[data-nage]').forEach(function(el){el.onclick=function(){S.newStudent.age=parseInt(el.getAttribute('data-nage'));render();};});
+    document.querySelectorAll('[data-nsport]').forEach(function(el){el.onclick=function(){S.newStudent.sport=el.getAttribute('data-nsport');render();};});
+    on('saveStudent',function(){
+        var name=((document.getElementById('nsName')||{}).value||'').trim();
+        var notes=((document.getElementById('nsNotes')||{}).value||'').trim();
+        if(!name){alert('Enter athlete name.');return;}
+        if(S.students.filter(function(s){return s.name.toLowerCase()===name.toLowerCase();}).length){alert(name+' is already in the roster.');return;}
+        S.students.push({id:Date.now(),name:name,age:S.newStudent.age,sport:S.newStudent.sport,notes:notes});
+        saveStu();S.tab='roster';S.view='home';render();
+    });
+
+    /* ASSESS */
+    var aNameSel=document.getElementById('aNameSel');
+    if(aNameSel){aNameSel.onchange=function(){if(aNameSel.value){var parts=aNameSel.value.split('|');S.form.name=parts[0];S.form.age=parseInt(parts[1]);S.form.sport=parts[2];S.form.vals={};render();}};}
+    document.querySelectorAll('[data-age]').forEach(function(el){el.onclick=function(){S.form.age=parseInt(el.getAttribute('data-age'));render();};});
+    document.querySelectorAll('[data-sport]').forEach(function(el){el.onclick=function(){S.form.sport=el.getAttribute('data-sport');S.form.vals={};render();};});
+    on('aCalc',function(){
+        var nameEl=document.getElementById('aName');var name=(nameEl?nameEl.value||'':'').trim();
+        if(!name){alert('Enter athlete name.');return;}
+        var sp=SPORTS[S.form.sport],vals={},ok=true;
+        Object.keys(sp.metrics).forEach(function(k){var v=((document.getElementById('m_'+k)||{}).value||'');if(!v||isNaN(parseFloat(v)))ok=false;vals[k]=v;});
+        if(!ok){alert('Please enter all 4 test results.');return;}
+        var res=calcScore(S.form.sport,S.form.age,vals);
+        var athlete={name:name,age:S.form.age,sport:S.form.sport,vals:vals,total:res.total,scores:res.scores,id:Date.now(),ts:new Date().toISOString()};
+        S.assessments.push(athlete);saveAss();S.form={name:'',age:12,sport:'Track & Field',vals:{}};
+        S.current=athlete;S.view='result';render();
+    });
+    on('hExport',doExport);on('hExport2',doExport);
+
+    /* RESULT */
+    on('rProgress',function(){S.view='progress';render();});
+    on('rNewTest',function(){S.form={name:'',age:12,sport:'Track & Field',vals:{}};S.tab='assess';S.view='home';render();});
+    on('rAllTests',function(){S.tab='tests';S.view='home';render();});
+    on('rTestSame',function(){S.form={name:S.current.name,age:S.current.age,sport:S.current.sport,vals:{}};S.tab='assess';S.view='home';render();});
+
+    /* TESTS LIST */
+    document.querySelectorAll('.ath-row').forEach(function(row){
+        row.onclick=function(){var n=row.getAttribute('data-name'),sp=row.getAttribute('data-sport');var h=hist(n,sp);S.current=h[h.length-1];S.view='result';render();};
+    });
+
+    /* PROGRESS */
+    on('pBack',function(){S.view='result';render();});
+    on('pTestAgain',function(){S.form={name:S.current.name,age:S.current.age,sport:S.current.sport,vals:{}};S.tab='assess';S.view='home';render();});
+    on('pExport',doExport);
+}
+
+loadAll();render();
+</script>
+</body>
+</html>
